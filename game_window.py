@@ -1,43 +1,41 @@
 import pygame
 import os
-import Start_Window
 import random
+import Start_Window
+meteor_lcoords = (160, 0)
+meteor_rcoords = (380, 0)
+screen = pygame.display.set_mode((600, 800))
 
 
 class GameWindow:
     def __init__(self, screen):
         self.screen = screen
-        self.bg_image = pygame.image.load('fonosnovnoi.jpg')  # Загрузка изображения фона
+        self.bg_image = pygame.image.load('E:/pygm1/data/fonosnovnoi.jpg')  # Загрузка изображения фона
 
     def draw_background(self):
         self.screen.blit(self.bg_image, (0, 0))  # Отображение фона на экране
 
 
-class Player:
+class Player(pygame.sprite.Sprite):
     def __init__(self):
-        self.rocket_lcoords = (180, 600)  # Координаты левого положения ракеты
-        self.rocket_rcoords = (400, 600)  # Координаты правого положения ракеты
-        self.images = []  # Список изображений для анимации игрока
-        # Загрузка изображений для анимации игрока (псевдокод)
-        for i in range(1, 5):
-            image_path = os.path.join(f'space_ship{i}.png')
-            self.images.append(pygame.image.load(image_path))
-        self.index = 0  # Текущий индекс изображения
-        self.image = self.images[self.index]  # Текущее изображение игрока
-        self.rect = self.image.get_rect()  # Получение прямоугольника для коллизий
+        super().__init__()
+        self.rocket_lcoords = (180, 600)
+        self.rocket_rcoords = (400, 600)
+        self.images = [pygame.image.load(os.path.join('data', f'space_ship{i}.png')) for i in range(1, 5)]
+        self.index = 0
+        self.image = self.images[self.index]
+        self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = self.rocket_lcoords
-        self.animation_speed = 100  # Скорость анимации (меньшее значение – медленнее)
-        self.move_direction = 1  # Направление перемещения игрока (1 - вправо, -1 - влево)
+        self.rocket_animation_speed = 100  # Скорость анимации
+        self.move_direction = 1
 
     def update(self):
-        # Логика обновления анимации игрока
         self.index += 1
         if self.index >= len(self.images):
             self.index = 0
         self.image = self.images[self.index]
 
     def move(self):
-        # Логика перемещения игрока при нажатии на пробел
         if self.move_direction == 1:
             self.rect.x, self.rect.y = self.rocket_rcoords
             self.move_direction = -1
@@ -45,41 +43,27 @@ class Player:
             self.rect.x, self.rect.y = self.rocket_lcoords
             self.move_direction = 1
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)  # Отображение игрока на экране
 
+class Asteroid(pygame.sprite.Sprite):
+    def __init__(self, meteor_image, meteor_speed, meteor_interval):
+        super().__init__()
+        self.image = pygame.image.load(os.path.join('data', meteor_image))
+        self.rect = self.image.get_rect()
+        self.meteor_lcoords = (160, 0)
+        self.meteor_rcoords = (380, 0)
+        self.rect.x, self.rect.y = random.choice([self.meteor_lcoords, self.meteor_rcoords])
+        self.speed = meteor_speed
+        self.interval = meteor_interval
 
-class Asteroids:
-    def __init__(self, screen):
-        self.screen = screen
-        self.meteor_image = pygame.image.load(os.path.join('meteorite.png'))  # Изображение астероида
-        self.meteor_lcoords = (180, -100)  # Координаты левой начальной позиции астероида
-        self.meteor_rcoords = (400, -100)  # Координаты правой начальной позиции астероида
-        self.meteor_speed = 5  # Скорость перемещения астероида вниз
-        self.meteor_interval = 200  # Интервал между появлениями астероидов
-        self.meteors = []  # Список всех астероидов
+    def update(self):
+        self.rect.y += self.speed
+        if self.rect.y > 800:
+            self.kill()  # Удаление спрайта, если он выходит за пределы экрана
 
-    def update(self, player_rect):
-        for meteor in self.meteors.copy():
-            meteor[1] += self.meteor_speed  # Перемещение астероида вниз
-
-            if meteor[1] >= 800:  # Удаление астероида, если он вышел за пределы экрана
-                self.meteors.remove(meteor)
-
-        # Создание нового астероида через определенный интервал
-        if len(self.meteors) == 0 or self.meteors[-1][1] >= self.meteor_interval:
-            coords = random.choice([self.meteor_lcoords, self.meteor_rcoords])
-            self.meteors.append([pygame.Rect(coords, (64, 64)), -100])
-
-        # Проверка на столкновение астероида с игроком
-        for meteor in self.meteors:
-            if meteor[1] >= 600 and player_rect.colliderect(meteor[0]):
-                game_over(self.screen)  # Вызов функции game_over
-                break
-
-    def draw(self):
-        for meteor in self.meteors:
-            self.screen.blit(self.meteor_image, meteor[0])  # Отображение астероида на экране
+    def check_collision(self, player):
+        global screen
+        if pygame.sprite.collide_rect(self, player):
+            game_over(screen)
 
 
 def game_over(screen):
@@ -94,7 +78,7 @@ def game_over(screen):
     play_button = pygame.Rect(200, 400, 200, 50)
     pygame.draw.rect(screen, (0, 255, 0), play_button)  # Отрисовка кнопки
     font = pygame.font.Font(None, 36)
-    play_text = font.render('Играть', True, (0, 0, 0))
+    play_text = font.render('Заново', True, (0, 0, 0))
     screen.blit(play_text, (250, 410))
 
     # Создание кнопки "Меню"
@@ -122,34 +106,46 @@ def game_over(screen):
 # Основной игровой цикл
 def play():
     pygame.init()
-    screen = pygame.display.set_mode((600, 800))
     clock = pygame.time.Clock()
 
     # Создание объектов игрового окна, игрока и астероидов
     game_window = GameWindow(screen)
     player = Player()
-    asteroids = Asteroids(screen)
+    asteroids = Asteroid('meteorite.png', 15, 50)
 
-    game_overfl = False
-    while not game_overfl:
+    asteroid_group = pygame.sprite.Group()
+    asteroid_group.add(asteroids)
+
+    spawn_counter = 0  # Счетчик для отслеживания появления новых астероидов
+
+    running = True
+    while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                game_overfl = True
-            if event.type == pygame.KEYDOWN:
+                running = False
+            elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     player.move()
 
+        spawn_counter += 1
+        if spawn_counter % 100 == 0:  # Создание нового астероида каждые 100 итераций
+            new_asteroid = Asteroid('meteorite.png', 15, 50)
+            asteroid_group.add(new_asteroid)
+
+        screen.fill((0, 0, 0))  # Очистка экрана
         game_window.draw_background()  # Отображение фона
-        asteroids.update(player.rect)  # Обновление состояния астероидов
-        player.update()  # Обновление состояния игрока
-        asteroids.draw()  # Отображение астероидов
-        player.draw(screen)  # Отображение игрока
+
+        player.update()
+        asteroid_group.update()
+
+        # Проверка столкновения астероидов с игроком
+        for asteroid in asteroid_group:
+            asteroid.check_collision(player)
+
+        asteroid_group.draw(screen)  # Отображение астероидов
+        screen.blit(player.image, player.rect)  # Отображение игрока
 
         pygame.display.flip()  # Обновление экрана
-        clock.tick(30)  # Ограничение кадров в секунду (30 FPS)
+        clock.tick(60)  # Ограничение частоты кадров
 
-
-if __name__ == "__main__":
-    pygame.init()  # Инициализация Pygame
-    play()  # Вызов функции для запуска игры
-    pygame.quit()  # Завершение Pygame
+    pygame.quit()
