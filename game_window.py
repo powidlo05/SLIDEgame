@@ -2,9 +2,11 @@ import pygame
 import os
 import random
 import Start_Window
-meteor_lcoords = (160, 0)
-meteor_rcoords = (380, 0)
+
+meteor_lcoords = (160, -50)
+meteor_rcoords = (380, -50)
 screen = pygame.display.set_mode((600, 800))
+score = 0
 
 
 class GameWindow:
@@ -26,7 +28,7 @@ class Player(pygame.sprite.Sprite):
         self.image = self.images[self.index]
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = self.rocket_lcoords
-        self.rocket_animation_speed = 100  # Скорость анимации
+        self.rocket_animation_speed = 30  # Скорость анимации
         self.move_direction = 1
 
     def update(self):
@@ -75,17 +77,17 @@ def game_over(screen):
     screen.blit(game_over_image, (0, 0))
 
     # Создание кнопки "Играть"
-    play_button = pygame.Rect(200, 400, 200, 50)
+    play_button = pygame.Rect(200, 670, 200, 50)
     pygame.draw.rect(screen, (0, 255, 0), play_button)  # Отрисовка кнопки
     font = pygame.font.Font(None, 36)
     play_text = font.render('Заново', True, (0, 0, 0))
-    screen.blit(play_text, (250, 410))
+    screen.blit(play_text, (250, 680))
 
     # Создание кнопки "Меню"
-    menu_button = pygame.Rect(200, 500, 200, 50)
+    menu_button = pygame.Rect(200, 730, 200, 50)
     pygame.draw.rect(screen, (255, 0, 0), menu_button)  # Отрисовка кнопки
     menu_text = font.render('Меню', True, (0, 0, 0))
-    screen.blit(menu_text, (260, 510))
+    screen.blit(menu_text, (260, 740))
 
     pygame.display.flip()  # Обновление экрана
 
@@ -105,33 +107,43 @@ def game_over(screen):
 
 # Основной игровой цикл
 def play():
+    global score
+    global meteor_lcoords
+    global meteor_rcoords
     pygame.init()
     clock = pygame.time.Clock()
 
     # Создание объектов игрового окна, игрока и астероидов
     game_window = GameWindow(screen)
     player = Player()
-    asteroids = Asteroid('meteorite.png', 15, 50)
+    asteroids = Asteroid('meteorite.png', 15, 30)
 
     asteroid_group = pygame.sprite.Group()
     asteroid_group.add(asteroids)
 
     spawn_counter = 0  # Счетчик для отслеживания появления новых астероидов
+    spawn_interval = 500  # Set the interval for spawning asteroids
+    last_spawn_time = pygame.time.get_ticks()  # Initialize the time of the last spawn
 
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                pygame.quit()
+                quit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     player.move()
 
-        spawn_counter += 1
-        if spawn_counter % 100 == 0:  # Создание нового астероида каждые 100 итераций
-            new_asteroid = Asteroid('meteorite.png', 15, 50)
+        # Создавать астероиды через регулярные промежутки времени
+        current_time = pygame.time.get_ticks()
+        if current_time - last_spawn_time > spawn_interval:
+            new_asteroid = Asteroid('meteorite.png', 15, 30)
+            new_asteroid.rect.x = random.choice(
+                [meteor_lcoords[0], meteor_rcoords[0]])  # Установить начальную позицию x
             asteroid_group.add(new_asteroid)
-
+            last_spawn_time = current_time  # Обновить время последнего появления
+            score += 1
         screen.fill((0, 0, 0))  # Очистка экрана
         game_window.draw_background()  # Отображение фона
 
