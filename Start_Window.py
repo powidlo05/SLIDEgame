@@ -5,6 +5,8 @@ import sys
 import game_window
 
 pygame.init()
+pygame.mixer.music.load('data/music_background.mp3')
+pygame.mixer.music.play(-1)
 
 
 class Start:
@@ -13,6 +15,7 @@ class Start:
         self.height = height
         self.black = (0, 0, 0)
         self.font1 = pygame.font.Font(None, 26)
+        self.font_text = pygame.font.Font("data/Arkhip.ttf", 36)
         self.screen = pygame.display.set_mode((width, height))
         self.data_folder = os.path.join(os.path.dirname(__file__))
         self.background = pygame.transform.scale(pygame.image.load(os.path.join(self.data_folder, "data/fongame.jpg")),
@@ -25,15 +28,13 @@ class Start:
 
     def draw_start_button(self):
         pygame.draw.rect(self.screen, (0, 128, 255), self.start_button)
-        font = pygame.font.Font(None, 36)
-        text = font.render('Начать', True, (255, 255, 255))
+        text = self.font_text.render('Начать', True, (255, 255, 255))
         text_rect = text.get_rect(center=self.start_button.center)
         self.screen.blit(text, text_rect)
 
     def draw_exit_button(self):
         pygame.draw.rect(self.screen, (255, 0, 0), self.exit_button)
-        font = pygame.font.Font(None, 36)
-        text = font.render('Выход', True, (255, 255, 255))
+        text = self.font_text.render('Выход', True, (255, 255, 255))
         text_rect = text.get_rect(center=self.exit_button.center)
         self.screen.blit(text, text_rect)
 
@@ -49,7 +50,7 @@ class Start:
         except Exception as e:
             print("Произошла ошибка при чтении файла:", e)
 
-        y_offset = 30
+        y_offset = 10
         for rule in rules:
             text = self.font1.render(rule, True, (255, 255, 255))
             self.screen.blit(text, (30, y_offset))
@@ -73,6 +74,15 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if start.start_button.collidepoint(event.pos):
                     game_window.play()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_1:
+                    pygame.mixer.music.pause()
+                elif event.key == pygame.K_2:
+                    pygame.mixer.music.unpause()
+                    pygame.mixer.music.set_volume(0.5)
+                elif event.key == pygame.K_3:
+                    pygame.mixer.music.unpause()
+                    pygame.mixer.music.set_volume(1)
 
         start.screen.blit(start.background, (0, 0))  # Отображение фона
 
