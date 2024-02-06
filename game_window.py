@@ -1,7 +1,6 @@
 import pygame
 import os
 import random
-import sys
 import Start_Window
 
 meteor_lcoords = (160, -50)
@@ -185,6 +184,8 @@ def play_1():
                     pygame.mixer.music.set_volume(1)
         # Создавать астероиды через регулярные промежутки времени
         current_time = pygame.time.get_ticks()
+        if score >= 50:
+            play_2()
         if current_time - last_spawn_time > spawn_interval:
             new_asteroid = Asteroid('meteorite_2.png', 10, 40)
             new_asteroid.rect.x = random.choice(
