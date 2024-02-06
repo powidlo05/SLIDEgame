@@ -1,6 +1,7 @@
 import pygame
 import os
 import random
+import sys
 import Start_Window
 
 meteor_lcoords = (160, -50)
@@ -14,7 +15,7 @@ class GameWindow:
         global score
         self.screen = screen
         self.font_score = pygame.font.Font("data/Maji.ttf", 100)
-        self.bg_image = pygame.image.load('E:/pygm1/data/fonosnovnoi.jpg')  # Загрузка изображения фона
+        self.bg_image = pygame.image.load('data/fonosnovnoi.jpg')  # Загрузка изображения фона
 
     def draw_background(self):
         self.screen.blit(self.bg_image, (0, 0))  # Отображение фона на экране
@@ -118,7 +119,7 @@ def game_over(screen):
                 x, y = event.pos
                 if play_button.collidepoint(x, y):
                     score = 0
-                    play()  # Вызов функции для запуска игры
+                    play_1()  # Вызов функции для запуска игры
                 elif menu_button.collidepoint(x, y):
                     score = 0
                     Start_Window.main()  # Вызов функции для возвращения в меню
@@ -134,7 +135,7 @@ def game_over(screen):
 
 
 # Основной игровой цикл
-def play():
+def play_1():
     global score
     global meteor_lcoords
     global meteor_rcoords
@@ -146,14 +147,87 @@ def play():
 
     # Создание объектов игрового окна, игрока и астероидов
     game_window = GameWindow(screen)
+
+    player = Player()
+    asteroids = Asteroid('meteorite_2.png', 10, 40)
+
+    asteroid_group = pygame.sprite.Group()
+    asteroid_group.add(asteroids)
+
+    spawn_interval = 900  # Установите интервал появления астероидов
+    last_spawn_time = pygame.time.get_ticks()  # Инициализируем время последнего появления
+
+    # Надпись "SCORE"
+    font_text_score = pygame.font.Font("data/Sriracha.ttf", 50)
+    text = font_text_score.render('SCORE:', True, (255, 255, 255))
+
+    run = True
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    player.move()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_1:
+                    if music_flag == 0:
+                        pygame.mixer.music.pause()
+                        music_flag = 1
+                    else:
+                        pygame.mixer.music.unpause()
+                        music_flag = 0
+                elif event.key == pygame.K_2:
+                    pygame.mixer.music.unpause()
+                    pygame.mixer.music.set_volume(0.5)
+                elif event.key == pygame.K_3:
+                    pygame.mixer.music.unpause()
+                    pygame.mixer.music.set_volume(1)
+        # Создавать астероиды через регулярные промежутки времени
+        current_time = pygame.time.get_ticks()
+        if current_time - last_spawn_time > spawn_interval:
+            new_asteroid = Asteroid('meteorite_2.png', 10, 40)
+            new_asteroid.rect.x = random.choice(
+                [meteor_lcoords[0], meteor_rcoords[0]])  # Установить начальную позицию x
+            asteroid_group.add(new_asteroid)
+            last_spawn_time = current_time  # Обновить время последнего появления
+            score += 1
+        screen.fill((0, 0, 0))  # Очистка экрана
+        game_window.draw_background()  # Отображение фона
+        game_window.draw_score(score)  # Отображение счета
+        player.update()
+        asteroid_group.update()
+
+        # Проверка столкновения астероидов с игроком
+        for asteroid in asteroid_group:
+            asteroid.check_collision(player)
+
+        asteroid_group.draw(screen)  # Отображение астероидов
+        screen.blit(player.image, player.rect)  # Отображение игрока
+        screen.blit(text, (30, 20))  # Отображение надписи "SCORE"
+        pygame.display.flip()  # Обновление экрана
+        clock.tick(60)  # Ограничение частоты кадров
+
+
+def play_2():
+    global score
+    global meteor_lcoords
+    global meteor_rcoords
+
+    # Флаг для паузы музыки
+    music_flag = 0
+    clock = pygame.time.Clock()
+
+    # Создание объектов игрового окна, игрока и астероидов
+    game_window = GameWindow(screen)
     player = Player()
     asteroids = Asteroid('meteorite.png', 15, 30)
 
     asteroid_group = pygame.sprite.Group()
     asteroid_group.add(asteroids)
 
-    spawn_interval = 500  # Set the interval for spawning asteroids
-    last_spawn_time = pygame.time.get_ticks()  # Initialize the time of the last spawn
+    spawn_interval = 500  # Установите интервал появления астероидов
+    last_spawn_time = pygame.time.get_ticks()  # Инициализируем время последнего появления
 
     # Надпись "SCORE"
     font_text_score = pygame.font.Font("data/Sriracha.ttf", 50)
@@ -163,14 +237,18 @@ def play():
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
+                running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     player.move()
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_1:
-                    pygame.mixer.music.pause()
+                    if music_flag == 0:
+                        pygame.mixer.music.pause()
+                        music_flag = 1
+                    else:
+                        pygame.mixer.music.unpause()
+                        music_flag = 0
                 elif event.key == pygame.K_2:
                     pygame.mixer.music.unpause()
                     pygame.mixer.music.set_volume(0.5)
@@ -201,5 +279,3 @@ def play():
         screen.blit(text, (30, 20))  # Отображение надписи "SCORE"
         pygame.display.flip()  # Обновление экрана
         clock.tick(60)  # Ограничение частоты кадров
-
-    pygame.quit()

@@ -7,6 +7,7 @@ import game_window
 pygame.init()
 pygame.mixer.music.load('data/music_background.mp3')
 pygame.mixer.music.play(-1)
+music_flag = 0
 
 
 class Start:
@@ -15,7 +16,7 @@ class Start:
         self.height = height
         self.black = (0, 0, 0)
         self.font1 = pygame.font.Font(None, 26)
-        self.font_text = pygame.font.Font("data/Arkhip.ttf", 36)
+        self.font_text = pygame.font.Font("data/Arkhip.ttf", 30)
         self.screen = pygame.display.set_mode((width, height))
         self.data_folder = os.path.join(os.path.dirname(__file__))
         self.background = pygame.transform.scale(pygame.image.load(os.path.join(self.data_folder, "data/fongame.jpg")),
@@ -23,13 +24,20 @@ class Start:
         self.icon = pygame.image.load(os.path.join(self.data_folder, "data/icon.jpg"))
         pygame.display.set_icon(self.icon)
         pygame.display.set_caption('Switch!')
-        self.start_button = pygame.Rect(200, 680, 200, 50)
+        self.start_button_1 = pygame.Rect(90, 680, 200, 50)
         self.exit_button = pygame.Rect(200, 740, 200, 50)
+        self.start_button_2 = pygame.Rect(300, 680, 200, 50)
 
-    def draw_start_button(self):
-        pygame.draw.rect(self.screen, (0, 128, 255), self.start_button)
-        text = self.font_text.render('Начать', True, (255, 255, 255))
-        text_rect = text.get_rect(center=self.start_button.center)
+    def draw_start_button1(self):
+        pygame.draw.rect(self.screen, (0, 128, 255), self.start_button_1)
+        text = self.font_text.render('1 уровень', True, (255, 255, 255))
+        text_rect = text.get_rect(center=self.start_button_1.center)
+        self.screen.blit(text, text_rect)
+
+    def draw_start_button2(self):
+        pygame.draw.rect(self.screen, (0, 128, 255), self.start_button_2)
+        text = self.font_text.render('2 уровень', True, (255, 255, 255))
+        text_rect = text.get_rect(center=self.start_button_2.center)
         self.screen.blit(text, text_rect)
 
     def draw_exit_button(self):
@@ -59,6 +67,7 @@ class Start:
 
 def main():
     # Создание объекта игры
+    global music_flag
     start = Start(600, 800)
 
     # Основной игровой цикл
@@ -72,11 +81,18 @@ def main():
                     pygame.quit()
                     sys.exit()  # Выход из программы при нажатии на кнопку "выход"
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if start.start_button.collidepoint(event.pos):
-                    game_window.play()
+                if start.start_button_1.collidepoint(event.pos):
+                    game_window.play_1()
+                if start.start_button_2.collidepoint(event.pos):
+                    game_window.play_2()
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_1:
-                    pygame.mixer.music.pause()
+                    if music_flag == 0:
+                        pygame.mixer.music.pause()
+                        music_flag = 1
+                    else:
+                        pygame.mixer.music.unpause()
+                        music_flag = 0
                 elif event.key == pygame.K_2:
                     pygame.mixer.music.unpause()
                     pygame.mixer.music.set_volume(0.5)
@@ -86,7 +102,8 @@ def main():
 
         start.screen.blit(start.background, (0, 0))  # Отображение фона
 
-        start.draw_start_button()  # Отображение кнопки "Начать"
+        start.draw_start_button1()
+        start.draw_start_button2()  # Отображение кнопки "Начать"
         start.draw_exit_button()  # Отображение кнопки "Выход"
         start.draw_rules()
         pygame.display.flip()  # Обновление экрана
